@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>ThemeAny</title>
+  <style>
+    :root {
+      /* Unified Background - No more box-in-a-box */
+      --bg: #0f0f11; 
+      
+      --surface: #1e1e20;
+      --border: #333336;
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --text-main: #ededed;
+      --text-muted: #a1a1aa;
+      --danger: #ef4444;
+      --danger-hover: #dc2626;
+    }
+
+    * { box-sizing: border-box; }
+
+    ::-webkit-scrollbar { width: 0px; background: transparent; }
+
+    body {
+      width: 300px; /* Standard width */
+      margin: 0;
+      padding: 16px; /* Clean internal spacing */
+      background-color: var(--bg);
+      color: var(--text-main);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-size: 14px;
+      /* No border-radius on body, filling the square window perfectly */
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border); /* Subtle divider */
+    }
+    
+    h3 {
+      margin: 0;
+      font-weight: 600;
+      font-size: 16px;
+      color: var(--text-main);
+    }
+
+    /* DROPDOWN - This keeps the rounded look inside */
+    .select-wrapper {
+      position: relative;
+      margin-bottom: 16px;
+    }
+
+    select {
+      width: 100%;
+      padding: 12px 16px;
+      background-color: var(--surface);
+      color: var(--text-main);
+      border: 1px solid var(--border);
+      border-radius: 12px; /* Smooth corners */
+      cursor: pointer;
+      font-size: 14px;
+      appearance: none;
+      outline: none;
+      transition: border 0.2s ease;
+    }
+
+    select:hover { border-color: #555; }
+    select:focus { border-color: var(--primary); }
+
+    .select-arrow {
+      position: absolute;
+      right: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      pointer-events: none;
+      width: 10px;
+      height: 10px;
+      fill: var(--text-muted);
+    }
+
+    /* SETTINGS ROW - Rounded "Card" inside the window */
+    .setting-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background-color: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 16px;
+    }
+
+    .label-group { display: flex; flex-direction: column; }
+    .label-title { font-weight: 500; color: var(--text-main); font-size: 13px; }
+    .label-desc { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+    /* SWITCH */
+    .switch { position: relative; display: inline-block; width: 40px; height: 22px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+      background-color: var(--bg); /* Dark track */
+      border: 1px solid var(--border);
+      transition: .3s cubic-bezier(0.4, 0.0, 0.2, 1);
+      border-radius: 34px;
+    }
+    .slider:before {
+      position: absolute; content: ""; height: 16px; width: 16px; left: 2px; bottom: 2px;
+      background-color: var(--text-muted);
+      transition: .3s cubic-bezier(0.4, 0.0, 0.2, 1);
+      border-radius: 50%;
+    }
+    input:checked + .slider { background-color: var(--primary); border-color: var(--primary); }
+    input:checked + .slider:before { transform: translateX(18px); background-color: white; }
+
+    /* BUTTONS */
+    .btn {
+      display: flex; align-items: center; justify-content: center;
+      width: 100%; padding: 10px;
+      border-radius: 12px;
+      font-weight: 600; cursor: pointer;
+      transition: background 0.2s; font-size: 13px;
+      border: none; background: transparent;
+    }
+
+    .btn-reset {
+      color: var(--danger);
+      background: rgba(239, 68, 68, 0.08); /* Very subtle background */
+      border: 1px solid transparent;
+    }
+    .btn-reset:hover {
+      background: rgba(239, 68, 68, 0.15);
+      border-color: rgba(239, 68, 68, 0.2);
+    }
+
+    optgroup { font-weight: 600; color: var(--text-muted); }
+    option { color: var(--text-main); background: var(--bg); padding: 8px; }
+
+  </style>
+</head>
+<body>
+
+  <header>
+    <h3>ThemeAny</h3>
+  </header>
+  
+  <div class="select-wrapper">
+    <select id="themeSelector">
+      <option value="" disabled selected>Select a Theme</option>
+      <optgroup label="Dark Themes">
+        <option value="monokai">Monokai Pro</option>
+        <option value="dracula">Dracula</option>
+        <option value="solarized">Solarized Deep</option>
+        <option value="github_dark">GitHub Darker</option>
+        <option value="nord">Nord Deep</option>
+        <option value="crimson">Crimson (Red)</option>
+      </optgroup>
+    </select>
+    <svg class="select-arrow" viewBox="0 0 24 24">
+      <path d="M7 10l5 5 5-5z"></path>
+    </svg>
+  </div>
+
+  <div class="setting-row">
+    <div class="label-group">
+      <span class="label-title">Auto-Apply</span>
+      <span class="label-desc">Inject on all pages</span>
+    </div>
+    <label class="switch">
+      <input type="checkbox" id="autoToggle">
+      <span class="slider"></span>
+    </label>
+  </div>
+
+  <button id="resetBtn" class="btn btn-reset">
+    Reset Page to Original
+  </button>
+
+  <script src="popup.js"></script>
+</body>
+</html>
