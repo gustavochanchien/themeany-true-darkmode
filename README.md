@@ -9,7 +9,7 @@ Apply professional VSCode-style dark themes to (almost) **any** website (disclai
 * **Privacy First:** Runs 100% locally. No remote code, no analytics.
 
 ## Installation
-1.  Go to the Chrome Extension Store: [LINK HERE] (awaiting approval)
+1.  Go to the Chrome Extension Store: [ThemeAny!](https://chromewebstore.google.com/detail/kjihonkoamigalhkfmndehdkfnldjpfi?utm_source=item-share-cb)
 2.  Add it to chrome!
 
 
