@@ -1,5 +1,6 @@
 const themeSelector = document.getElementById('themeSelector');
 const autoToggle = document.getElementById('autoToggle');
+const applyHereBtn = document.getElementById('applyHereBtn');
 const resetBtn = document.getElementById('resetBtn');
 
 // 1. Initialize State
@@ -8,11 +9,11 @@ chrome.storage.local.get(['preferredTheme', 'autoMode'], (data) => {
   if (data.autoMode) autoToggle.checked = true;
 });
 
-// 2. Instant Apply on Selection
+// 2. Save preference and apply on selection
 themeSelector.addEventListener('change', () => {
   const theme = themeSelector.value;
   savePreference(theme);
-  injectAndApply(theme);
+  if (theme) injectAndApply(theme);
 });
 
 // 3. Auto Mode Toggle
@@ -30,8 +31,18 @@ autoToggle.addEventListener('change', (e) => {
   }
 });
 
-// 4. Reset
+// 4. Apply Here
+applyHereBtn.addEventListener('click', () => {
+  const theme = themeSelector.value;
+  if (theme) injectAndApply(theme);
+});
+
+// 5. Reset
 resetBtn.addEventListener('click', () => {
+  if (autoToggle.checked) {
+    autoToggle.checked = false;
+    chrome.storage.local.set({ autoMode: false });
+  }
   chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
     if (tabs[0]) chrome.tabs.reload(tabs[0].id);
   });
@@ -44,6 +55,7 @@ function injectAndApply(theme) {
       target: { tabId: tabs[0].id },
       files: ['content.js']
     }, () => {
+      if (chrome.runtime.lastError) return;
       chrome.tabs.sendMessage(tabs[0].id, { action: "setTheme", theme: theme });
     });
   });

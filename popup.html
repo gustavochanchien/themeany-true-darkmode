@@ -128,6 +128,14 @@
       border: none; background: transparent;
     }
 
+    .btn-primary {
+      color: white;
+      background: var(--primary);
+      border: 1px solid transparent;
+      margin-bottom: 8px;
+    }
+    .btn-primary:hover { background: var(--primary-hover); }
+
     .btn-reset {
       color: var(--danger);
       background: rgba(239, 68, 68, 0.08); /* Very subtle background */
@@ -159,6 +167,8 @@
         <option value="github_dark">GitHub Darker</option>
         <option value="nord">Nord Deep</option>
         <option value="crimson">Crimson (Red)</option>
+        <option value="one_dark">One Dark Pro</option>
+        <option value="catppuccin">Catppuccin Mocha</option>
       </optgroup>
     </select>
     <svg class="select-arrow" viewBox="0 0 24 24">
@@ -168,14 +178,18 @@
 
   <div class="setting-row">
     <div class="label-group">
-      <span class="label-title">Auto-Apply</span>
-      <span class="label-desc">Inject on all pages</span>
+      <span class="label-title">Apply Everywhere</span>
+      <span class="label-desc">Inject on all pages automatically</span>
     </div>
     <label class="switch">
       <input type="checkbox" id="autoToggle">
       <span class="slider"></span>
     </label>
   </div>
+
+  <button id="applyHereBtn" class="btn btn-primary">
+    Apply Here
+  </button>
 
   <button id="resetBtn" class="btn btn-reset">
     Reset Page to Original

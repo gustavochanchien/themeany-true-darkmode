@@ -2,9 +2,30 @@
     if (window.themerLoaded) return;
     window.themerLoaded = true;
 
+    let activeTheme = null;
+    let mainThemeBgString = null;
+    let observer = null;
+    let pendingMutations = new Set();
+    let mutationTimeout = null;
+    let IS_ORIGINALLY_DARK = null;
+
     // --- FETCH THEMES ---
     const themeUrl = chrome.runtime.getURL('themes.json');
     let THEMES = {};
+    let pendingTheme = null;
+
+    // Register the listener before the async fetch so messages aren't lost
+    chrome.runtime.onMessage.addListener((request) => {
+        if (request.action === "setTheme") {
+            if (THEMES[request.theme]) {
+                initTheme(THEMES[request.theme]);
+            } else {
+                // Themes not loaded yet — queue it
+                pendingTheme = request.theme;
+            }
+        }
+    });
+
     try {
         const response = await fetch(themeUrl);
         THEMES = await response.json();
@@ -12,38 +33,38 @@
         console.error("Failed to load themes.json", e);
     }
 
-    let activeTheme = null;
-    let mainThemeBgString = null;
-    let observer = null;
-    let pendingMutations = new Set();
-    let mutationTimeout = null;
-    
-    // Brightness Check (Run Once)
-    const IS_ORIGINALLY_DARK = detectPageBrightness();
-
-    chrome.runtime.onMessage.addListener((request) => {
-        if (request.action === "setTheme") {
-            if (THEMES[request.theme]) initTheme(THEMES[request.theme]);
-        }
-    });
+    // Apply any theme that arrived while we were fetching
+    if (pendingTheme && THEMES[pendingTheme]) {
+        initTheme(THEMES[pendingTheme]);
+        pendingTheme = null;
+    }
 
     function initTheme(theme) {
+        if (IS_ORIGINALLY_DARK === null) IS_ORIGINALLY_DARK = detectPageBrightness();
         activeTheme = theme;
-        
+
         const { h, s, l } = theme.neutrals.bg;
         mainThemeBgString = `rgba(${hslToRgb(h, s, l).join(',')}, 1)`;
 
-        // Cleanup: Reset flags
+        // Clear forced inline styles from any previous theme application
+        [document.documentElement, document.body].forEach(el => {
+            el.style.removeProperty('background-color');
+            el.style.removeProperty('color');
+        });
+
+        // Cleanup: Reset flags AND all cached original values
         document.querySelectorAll('[data-theme-processed]').forEach(el => {
             el.removeAttribute('data-theme-processed');
             el.style.removeProperty('border-radius');
+            [...el.attributes]
+                .filter(a => a.name.startsWith('data-og-'))
+                .forEach(a => el.removeAttribute(a.name));
         });
 
-        injectGlobalStyles();
+        injectGlobalStyles(theme);
         injectPseudoStyles();
-        forceRootBackground(theme);
-        
         processNode(document.body);
+        forceRootBackground(theme);
 
         if (observer) observer.disconnect();
         observer = new MutationObserver((mutations) => {
@@ -63,11 +84,17 @@
         observer.observe(document.body, { childList: true, subtree: true });
     }
 
-    function injectGlobalStyles() {
-        if (document.getElementById('theme-global-styles')) return;
+    function injectGlobalStyles(theme) {
+        const old = document.getElementById('theme-global-styles');
+        if (old) old.remove();
+
+        const { h, s, l } = theme.neutrals.bg;
+        const trackColor = `hsl(${h}, ${s}%, ${Math.min(l + 4, 100)}%)`;
+        const thumbColor = `hsl(${h}, ${s}%, ${Math.min(l + 18, 100)}%)`;
+        const thumbHoverColor = `hsl(${h}, ${s}%, ${Math.min(l + 28, 100)}%)`;
+
         const style = document.createElement('style');
         style.id = 'theme-global-styles';
-        // Add Transitions and Scrollbar styling
         style.textContent = `
             html, body {
                 transition: background-color 0.3s ease, color 0.3s ease;
@@ -77,15 +104,15 @@
                 height: 12px;
             }
             ::-webkit-scrollbar-track {
-                background: #1a1a1a; 
+                background: ${trackColor};
             }
             ::-webkit-scrollbar-thumb {
-                background: #444; 
+                background: ${thumbColor};
                 border-radius: 6px;
-                border: 2px solid #1a1a1a;
+                border: 2px solid ${trackColor};
             }
             ::-webkit-scrollbar-thumb:hover {
-                background: #666; 
+                background: ${thumbHoverColor};
             }
         `;
         document.head.appendChild(style);
@@ -168,17 +195,19 @@
         const color = parseColor(val);
         if (color && color.a > 0) {
             const newColor = mapColorToTheme(color, activeTheme, type);
-            el.style.setProperty(prop, newColor, 'important');
+            const cssProp = prop.replace(/([A-Z])/g, '-$1').toLowerCase();
+            el.style.setProperty(cssProp, newColor, 'important');
         }
     }
 
     function processBackgroundImage(el, originalString) {
-        const colorRegex = /rgba?\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*(?:,\s*[\d.]+\s*)?\)/g;
-        const newString = originalString.replace(colorRegex, (match) => {
+        const remap = (match) => {
             const color = parseColor(match);
-            if (!color) return match; 
-            return mapColorToTheme(color, activeTheme, 'bg');
-        });
+            return color ? mapColorToTheme(color, activeTheme, 'bg') : match;
+        };
+        const newString = originalString
+            .replace(/rgba?\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*(?:,\s*[\d.]+\s*)?\)/g, remap)
+            .replace(/#[0-9a-fA-F]{8}\b|#[0-9a-fA-F]{6}\b|#[0-9a-fA-F]{3,4}\b/g, remap);
         if (newString !== originalString) {
             el.style.setProperty('background-image', newString, 'important');
         }
@@ -298,6 +327,7 @@
     }
 
     function findClosestAccent(sourceHsl, themeAccents) {
+        if (!themeAccents || themeAccents.length === 0) return { h: sourceHsl.h, s: 50, l: 60 };
         let closest = themeAccents[0];
         let minDiff = 360;
         themeAccents.forEach(accent => {
@@ -313,11 +343,15 @@
         if (str === 'transparent') return {r:0, g:0, b:0, a:0};
         if (str.startsWith('#')) {
             let hex = str.slice(1);
-            if (hex.length === 3) hex = hex.split('').map(c=>c+c).join('');
+            if (hex.length === 3 || hex.length === 4) hex = hex.split('').map(c => c+c).join('');
+            if (hex.length === 8) {
+                const bi = parseInt(hex.slice(0, 6), 16);
+                return { r: (bi >> 16) & 255, g: (bi >> 8) & 255, b: bi & 255, a: parseInt(hex.slice(6), 16) / 255 };
+            }
             const bi = parseInt(hex, 16);
             return { r: (bi >> 16) & 255, g: (bi >> 8) & 255, b: bi & 255, a: 1 };
         }
-        const m = str.match(/rgba?\((\d+), \s*(\d+), \s*(\d+)(?:, \s*([\d.]+))?\)/);
+        const m = str.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
         if (!m) return null;
         return { r: +m[1], g: +m[2], b: +m[3], a: m[4] !== undefined ? +m[4] : 1 };
     }
