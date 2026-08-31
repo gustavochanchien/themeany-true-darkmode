@@ -3,7 +3,7 @@
 Apply professional VSCode-style dark themes to (almost) **any** website (disclaimer google forbids extensions from running on google play store or extension store). ThemeAny uses semantic color mapping to preserve syntax highlighting, gradients, and readability on any page you visit. 
 
 ## Features
-* **10 Themes:** Monokai Pro, Dracula, Nord Deep, GitHub Dark, and more.
+* **8 Themes:** Monokai Pro, Dracula, Solarized Deep, GitHub Darker, Nord Deep, Crimson, One Dark Pro, Catppuccin Mocha.
 * **Smart Mapping:** Intelligently darkens backgrounds while keeping text and accents vibrant.
 * **Auto-Apply:** Set it and forget it—automatically themes every new tab you open.
 * **Privacy First:** Runs 100% locally. No remote code, no analytics.

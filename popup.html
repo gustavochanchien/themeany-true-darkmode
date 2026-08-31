@@ -128,6 +128,14 @@
       border: none; background: transparent;
     }
 
+    .btn-primary {
+      color: white;
+      background: var(--primary);
+      border: 1px solid transparent;
+      margin-bottom: 8px;
+    }
+    .btn-primary:hover { background: var(--primary-hover); }
+
     .btn-reset {
       color: var(--danger);
       background: rgba(239, 68, 68, 0.08); /* Very subtle background */
@@ -150,16 +158,9 @@
   </header>
   
   <div class="select-wrapper">
+    <!-- Options are built from themes.json by popup.js -->
     <select id="themeSelector">
       <option value="" disabled selected>Select a Theme</option>
-      <optgroup label="Dark Themes">
-        <option value="monokai">Monokai Pro</option>
-        <option value="dracula">Dracula</option>
-        <option value="solarized">Solarized Deep</option>
-        <option value="github_dark">GitHub Darker</option>
-        <option value="nord">Nord Deep</option>
-        <option value="crimson">Crimson (Red)</option>
-      </optgroup>
     </select>
     <svg class="select-arrow" viewBox="0 0 24 24">
       <path d="M7 10l5 5 5-5z"></path>
@@ -168,14 +169,18 @@
 
   <div class="setting-row">
     <div class="label-group">
-      <span class="label-title">Auto-Apply</span>
-      <span class="label-desc">Inject on all pages</span>
+      <span class="label-title">Apply Everywhere</span>
+      <span class="label-desc">Inject on all pages automatically</span>
     </div>
     <label class="switch">
       <input type="checkbox" id="autoToggle">
       <span class="slider"></span>
     </label>
   </div>
+
+  <button id="applyHereBtn" class="btn btn-primary">
+    Apply Here
+  </button>
 
   <button id="resetBtn" class="btn btn-reset">
     Reset Page to Original
